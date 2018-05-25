@@ -1,15 +1,273 @@
-/* 
-To use you need to create an application on Github at https://github.com/settings/developers
-The callback in this needs to be set to https://script.google.com/macros/d/{SCRIPT ID}/usercallback
-Where {SCRIPT ID} is the ID of the script that is using this library. You can find your script's ID in the Apps Script code editor by clicking on the menu item "File > Project properties".
+// ******************************************************************************************************
+// Function to send to logger the list of all your repos. 
+// Does not use Auth since it is all public
+// IN:
+//   Optional:
+//     gh_user: a string with the name of the repo owner. Defaults to the scriptProperty of the same name
+// OUT:
+//   JSON response to Logger
+// ******************************************************************************************************
+function getMyRepos(gh_user) {
 
-In this example code I've stored the apllicaitons clientId and clientSecret in the Script Properties:
-   - git_clientId
-   - git_clientSecret
+  if (typeof gh_user === 'undefined') { gh_user = printSVal('gh_user'); }
+  
+  // https://developer.github.com/v3/repos/contents/#create-a-file
+  var url = Utilities.formatString('https://api.github.com/users/%s/repos', gh_user);    
+    
+  var params = {
+    method: 'GET',
+    contentType: "application/json",
+    responseType: 'json',
+  }
+    
+  var response = UrlFetchApp.fetch(url, params);
+
+  if (response.getResponseCode() == 200 || response.getResponseCode() == 201) {
+    Logger.log( JSON.parse(response.getContentText()) );
+  } else {
+    throw new Error(response.getContentText());
+  }
+    
+}
+
+
+
+// ******************************************************************************************************
+// Function to send to logger the content of one of your repos. 
+// Does not use Auth since I am using only public repos
+// IN:
+//   Optional:
+//     gh_user: a string with the name of the repo owner. Defaults to the scriptProperty of the same name
+//     gh_repo: a string with the repo name. Defaults to the scriptProperty of the same name
+//     path: the path of the folder or file. Defaults to /
+//     branch: a string with the branch. Defaults to 'master'
+// OUT:
+//   JSON response
+// ******************************************************************************************************
+function getRepoContent(gh_user, gh_repo, path, branch) {
+  
+  if (typeof gh_user === 'undefined') { gh_user = printSVal('gh_user'); }
+  if (typeof gh_repo === 'undefined') { gh_repo = printSVal('gh_repo'); }
+  if (typeof path === 'undefined'   ) { path    = ''; }
+  if (typeof branch === 'undefined') { branch = 'master' }
+  
+  var params = {
+    method: 'GET',
+    muteHttpExceptions: true,
+    contentType: "application/json",
+    responseType: 'json',
+  }
    
-More info on setting up oAuth2 library here https://github.com/googlesamples/apps-script-oauth2
+  var url = Utilities.formatString('https://api.github.com/repos/%s/%s/contents/%s', gh_user, gh_repo, path);  
+  var response = UrlFetchApp.fetch(url, params);
 
-This example code has been put together by Martin Hawksey https://mashe.hawksey.info. Free to reuse as you like
+  if (response.getResponseCode() == 200 || response.getResponseCode() == 201) {
+    return JSON.parse(response.getContentText());
+  } else {
+    throw new Error(response.getContentText());
+    return false;
+  }
+
+}
+
+
+
+// ******************************************************************************************************
+// Function to create a file in a github repo. 
+// See https://developer.github.com/v3/repos/contents/#create-a-file
+// IN:
+//   Required:
+//     path: where the file will be (include the filename!)
+//     fileContent: the content of the file (it will be converted to base64 before sending it)
+//   Optional:
+//     message: a github comment
+//     branch: defaults to master
+// OUT:
+//   True (the file was created)
+//   False (the file was not created)
+// ******************************************************************************************************
+function createFile(path, fileContent, message, branch) {
+
+  if (typeof message === 'undefined') { message = 'Created on ' + Date.now(); }
+  if (typeof branch === 'undefined') { branch = 'master' }
+  var gh_user = printSVal('gh_user');
+  var gh_repo = printSVal('gh_repo');
+  var token   = printSVal('gh_token');
+  
+  var filePath = path ? encodeURI(path) : '';
+     		
+  // https://developer.github.com/v3/repos/contents/#create-a-file
+  var url = Utilities.formatString('https://api.github.com/repos/%s/%s/contents/%s', gh_user, gh_repo, filePath);  
+  
+  var email = Session.getActiveUser().getEmail();
+  
+  var payloadParams= {
+    branch: branch,
+    message: message,
+    content: Utilities.base64Encode(fileContent),
+    committer: {
+      name: gh_user,
+      email: email
+    }
+  }
+        
+  var params = {
+    method: 'PUT',
+    muteHttpExceptions: true,
+    contentType: "application/json",
+    responseType: 'json',
+    headers: { Authorization: 'Bearer ' + token },
+    payload: JSON.stringify( payloadParams )
+  }
+      
+  var response = UrlFetchApp.fetch(url, params);
+
+  if (response.getResponseCode() == 200 || response.getResponseCode() == 201) {
+    return true;
+  } else {
+    //update it
+    
+    return false;
+  }
+    
+}
+
+
+
+
+// ******************************************************************************************************
+// Function to update a file in a github repo. 
+// See https://developer.github.com/v3/repos/contents/#create-a-file
+// IN:
+//   Required:
+//     path: where the file will be (include the filename!)
+//     fileContent: the content of the file (it will be converted to base64 before sending it)
+//     sha: the sha of the file to be updated  
+//   Optional:
+//     message: a github comment
+//     branch: defaults to master
+// OUT:
+//   True (the file was created)
+//   False (the file was not created)
+// ******************************************************************************************************
+function updateFile(path, fileContent, message, branch, sha) {
+
+  if (typeof message === 'undefined') { message = 'Created on ' + Date.now(); }
+  if (typeof branch === 'undefined') { branch = 'master' }
+  var gh_user = printSVal('gh_user');
+  var gh_repo = printSVal('gh_repo');
+  var token   = printSVal('gh_token');
+  
+  var filePath = path ? encodeURI(path) : '';
+     		
+  // https://developer.github.com/v3/repos/contents/#update-a-file
+  var url = Utilities.formatString('https://api.github.com/repos/%s/%s/contents/%s', gh_user, gh_repo, filePath);  
+  
+  var email = Session.getActiveUser().getEmail();
+  
+  var payloadParams= {
+    branch: branch,
+    message: message,
+    sha: sha,
+    content: Utilities.base64Encode(fileContent),
+    committer: {
+      name: gh_user,
+      email: email
+    }
+  }
+        
+  var params = {
+    method: 'PUT',
+    muteHttpExceptions: true,
+    contentType: "application/json",
+    responseType: 'json',
+    headers: { Authorization: 'Bearer ' + token },
+    payload: JSON.stringify( payloadParams )
+  }
+      
+  var response = UrlFetchApp.fetch(url, params);
+
+  if (response.getResponseCode() == 200 || response.getResponseCode() == 201) {
+    return true;
+  } else {  
+    return false;
+  }
+    
+}
+
+
+// ******************************************************************************************************
+// Function to delete a file in a github repo. 
+// See https://developer.github.com/v3/repos/contents/#create-a-file
+// IN:
+//   Required:
+//     path: where the file will be (include the filename!)
+//     sha: the sha of the file to be updated  
+//   Optional:
+//     message: a github comment
+//     branch: defaults to master
+// OUT:
+//   True (the file was created)
+//   False (the file was not created)
+// ******************************************************************************************************
+function deleteFile(path, message, branch, sha) {
+
+  if (typeof message === 'undefined') { message = 'Created on ' + Date.now(); }
+  if (typeof branch === 'undefined') { branch = 'master' }
+  var gh_user = printSVal('gh_user');
+  var gh_repo = printSVal('gh_repo');
+  var token   = printSVal('gh_token');
+  
+  var filePath = path ? encodeURI(path) : '';
+     		
+  // https://developer.github.com/v3/repos/contents/#delete-a-file
+  var url = Utilities.formatString('https://api.github.com/repos/%s/%s/contents/%s', gh_user, gh_repo, filePath);  
+  
+  var email = Session.getActiveUser().getEmail();
+  
+  var payloadParams= {
+    branch: branch,
+    message: message,
+    sha: sha,
+    committer: {
+      name: gh_user,
+      email: email
+    }
+  }
+        
+  var params = {
+    method: 'DELETE',
+    muteHttpExceptions: true,
+    contentType: "application/json",
+    responseType: 'json',
+    headers: { Authorization: 'Bearer ' + token },
+    payload: JSON.stringify( payloadParams )
+  }
+      
+  var response = UrlFetchApp.fetch(url, params);
+
+  if (response.getResponseCode() == 200 || response.getResponseCode() == 201) {
+    return true;
+  } else {  
+    return false;
+  }
+    
+}
+
+
+
+
+
+
+
+
+
+/* 
+Credits:
+  The example code that has been used as a starting point for these scripts is by 
+  Martin Hawksey https://mashe.hawksey.info who set it as "free to reuse as you like" - thank you!
+  For ful details and the orginal code see his post at
+  https://mashe.hawksey.info/2016/08/working-with-github-repository-files-using-google-apps-script-examples-in-getting-writing-and-committing-content/
 */
 
 
@@ -17,19 +275,19 @@ This example code has been put together by Martin Hawksey https://mashe.hawksey.
  * Getting a file less than 1MB. 
  * See https://developer.github.com/v3/repos/contents/#get-contents
  */
-function getSmallFileFromGithub(){
+function getSmallFileFromGithub(gh_filename, gh_directory){
   // set token service
   Github.setTokenService(function(){ return getGithubService_().getAccessToken();});
   // set the repository wrapper
   // Github.setRepo('YOUR_USERNAME', 'YOUR_REPO');
-  Github.setRepo('mhawksey', 'mhawksey.github.io'); // e.g. Github.setRepo('mhawksey', 'mhawksey.github.io');
+  Github.setRepo(gh_user, gh_repo);
   var branch = 'heads/master'; // you can switch to differnt branch
   
   // getting a single file object
-  var git_file_obj = Github.Repository.getContents({ref: branch}, 'tweets/data/js/payload_details.js');
+  var git_file_obj = Github.Repository.getContents({ref: branch}, gh_filename);
   var git_file = Utilities.newBlob(Utilities.base64Decode(git_file_obj.content)).getDataAsString();
   
-  var git_dir = Github.Repository.getContents({ref: branch}, 'tweets/data/js/');
+  var git_dir = Github.Repository.getContents({ref: branch}, gh_directory);
   // In my project I included a getContentsByUrl which uses a git url which is useful if working within the tree
   var git_file_by_url = Github.Repository.getContentsByUrl(git_dir[0].git_url);
   
@@ -40,18 +298,18 @@ function getSmallFileFromGithub(){
  * For files over 1MB you get to fetch as a blob using sha reference. 
  * See https://developer.github.com/v3/git/blobs/#get-a-blob
  */
-function getLargeFileFromGithub(){
+function getLargeFileFromGithub(tree_name, gh_filename){
   // set token service
   Github.setTokenService(function(){ return getGithubService_().getAccessToken();});
   // set the repository wrapper
   // Github.setRepo('YOUR_USERNAME', 'YOUR_REPO'); 
-  Github.setRepo('mhawksey', 'mhawksey.github.io'); // e.g. Github.setRepo('mhawksey', 'mhawksey.github.io');
+  Github.setRepo(gh_user, gh_repo); // e.g. Github.setRepo(gh_user, gh_repo);
   var branch = 'heads/master'; // you can switch to differnt branch
   
-  // first we get the git hub directory tree e.g. here getting the tweets sub-dir
-  var tweet_dir = Github.Repository.getContents({ref: 'master'}, 'tweets');
+  // first we get the git hub directory tree 
+  var file_dir = Github.Repository.getContents({ref: 'master'}, tree_name);
   // filtering for the filename we are looking for
-  var git_file = tweet_dir.filter(function(el){ return el.name === 'tweets.csv' });
+  var git_file = file_dir.filter( function(el){ return el.name === gh_filename } );
   // getting the file
   var git_blob = Utilities.newBlob(Utilities.base64Decode(Github.Repository.getBlob(git_file[0].sha).content)).getDataAsString();
   
@@ -63,46 +321,55 @@ function getLargeFileFromGithub(){
  * See https://developer.github.com/v3/repos/contents/#create-a-file
  * and https://developer.github.com/v3/repos/contents/#update-a-file
  */
-function commitSingleFileToGithub() {
+function commitSingleJSONFileToGithub(gh_filename, json_string, branch, gh_commit_message) {
+  
+  Logger.log(gh_filename);
+  Logger.log(json_string);
   // set token service
   Github.setTokenService(function(){ return getGithubService_().getAccessToken();});
   // set the repository wrapper
-  // Github.setRepo('YOUR_USERNAME', 'YOUR_REPO'); // e.g. Github.setRepo('mhawksey', 'mhawksey.github.io');
-  Github.setRepo('mhawksey', 'mhawksey.github.io'); 
-  var branch = 'master'; // you can switch to differnt branch
+  // Github.setRepo('YOUR_USERNAME', 'YOUR_REPO'); 
+  Github.setRepo(gh_user, gh_repo); 
   
-  // Sending string content
-  var test_json = {foo:'bar'};
   try { // if file exists need to get it's sha and update instead
-    var resp = Github.Repository.createFile(branch, 'test2.json', JSON.stringify(test_json), "YOUR FILE COMMIT MESSAGE HERE");
+    Logger.log('create');
+    var resp = Github.Repository.createFile(branch, gh_filename, JSON.stringify(json_string), gh_commit_message);
+    Logger.log(resp);
   } catch(e) {
-    test_json.newbit = "some more data";
-    var git_file_obj = Github.Repository.getContents({ref: branch}, 'test2.json');
-    Github.Repository.updateFile(branch, 'test2.json', JSON.stringify(test_json), git_file_obj.sha, "YOUR UPDATED FILE COMMIT MESSAGE HERE");
+    Logger.log('update');
+    var git_file_obj = Github.Repository.getContents({ref: branch}, gh_filename);
+    Github.Repository.updateFile(branch, gh_filename, JSON.stringify(json_string), git_file_obj.sha, gh_commit_message);
   }
 }
 
 /**
  * Adding multiple files to Github as a single commit.
  */
-function commitMultipleFilesToGithub() {
+function commitMultipleFilesToGithub(json_string, gh_path_and_filename) {
   // set token service
   Github.setTokenService(function(){ return getGithubService_().getAccessToken();});
   // set the repository wrapper
-  //Github.setRepo('YOUR_USERNAME', 'YOUR_REPO'); // e.g. Github.setRepo('mhawksey', 'mhawksey.github.io');
-  Github.setRepo('mhawksey', 'mhawksey.github.io');
+  //Github.setRepo('YOUR_USERNAME', 'YOUR_REPO'); // e.g. Github.setRepo(gh_user, gh_repo);
+  Github.setRepo(gh_user, gh_repo);
   var branch = 'heads/master'; // you can switch to differnt branch
   
   var newTree = []; // new tree to commit
   
   // Sending string content
-  var test_json = {foo:'bar2'};
   // building new tree, by pushing content to Github, here pushing test_json
-  newTree.push({"path": 'test2.json', // path includes path and filename - here adding test.json to repo root
+  newTree.push({"path": gh_path_and_filename, // path includes path and filename
                 "mode": "100644",
                 "type": "blob",
-                "sha" : Github.Repository.createBlob(JSON.stringify(test_json)).sha});
+                "sha" : Github.Repository.createBlob(JSON.stringify(json_string)).sha});
    
+  
+  
+  
+  //superpollo
+  
+  
+  
+  
   // Sending a blob - grabbing an example file to push
   var resp = UrlFetchApp.fetch("https://www.gstatic.com/images/icons/material/product/2x/apps_script_64dp.png");
   
@@ -236,6 +503,8 @@ var Github = (function() {
      */
     function _request(method, path, data, raw) {
         var url = __getURL(path);
+        Logger.log('_request url: ' + url)
+        
         var queryParams = {};
 
         var config = {
@@ -246,15 +515,19 @@ var Github = (function() {
                         Authorization: "Bearer " + tokenService_()
                     },
                     responseType: raw ? 'text' : 'json'
-                }
+        }  
+        Logger.log("_request basic config: " + JSON.stringify(config) );
+      
         var shouldUseDataAsParams = data && (typeof data === 'object') && methodHasNoBody(method);
         if (shouldUseDataAsParams) {
             url = buildUrl_(url, data);
         } else if (data !== null){
           config.payload = JSON.stringify(data);
         }
-        Logger.log("Github request ... "+url+" config: "+JSON.stringify(config));
-        var response = UrlFetchApp.fetch(url, config)
+        Logger.log("_request data config: " + JSON.stringify(config) );
+
+        var response = UrlFetchApp.fetch(url, config);
+        Logger.log('ResponseCode: ' + response.getResponseCode());
         if (response.getResponseCode() == 200 || response.getResponseCode() == 201) {
             return JSON.parse(response.getContentText());
         } else {
@@ -611,7 +884,13 @@ var Github = (function() {
       if (options.sha) {
         commit.sha = options.sha;
       }
-      return _request('PUT', Utilities.formatString('/repos/%s/contents/%s', __fullname, path), commit);
+     
+     Logger.log('create - commit');
+     Logger.log(commit);
+     var url = Utilities.formatString('/repos/%s/contents/%s', __fullname, path)
+     Logger.log('create - url');
+     Logger.log(url);
+     return _request('PUT', url, commit);
    }
    
    /**
