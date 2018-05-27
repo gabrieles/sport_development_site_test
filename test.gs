@@ -1,3 +1,7 @@
+function reposToLogger() {
+  Logger.log( getMyRepos('gabrieles') );
+}
+
 function createTestFile(){
   var path = 'test.txt'
   var fileContent = 'melonstan';

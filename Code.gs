@@ -4,37 +4,11 @@ var scriptURL = "https://script.google.com/macros/s/AKfycbytiMYA6sUnb5dRE3yVzXUJ
 
 
 /* 
-To use this code you need to:
-
-1) Create an application on Github at https://github.com/settings/developers
-     - The callback needs to be set to https://script.google.com/macros/d/{SCRIPT ID}/usercallback 
-       where {SCRIPT ID} is the ID of this script, which you can find by clicking on the menu item "File > Project properties" in the script editor
-     - The URL needs to be set to where you will be making the call from, so if you are creating an HTML dashboard you will need to use its URL
-     
-2) Once you have created the application on github, store its Client ID and Client Secret as properties of this Script. 
-   You can do it using the custom menu item "GitHub > Configure github connection" (if you have just copy&pasted this code, reopen this file to see it)
-
-3) Setup the OAuth2 library at https://github.com/gsuitedevs/apps-script-oauth2
-   You can do it in two ways:
-   a) Add it as a library (as it is already published as an Apps Script) 
-      In the Apps Script code editor:
-        - Click on the menu item "Resources > Libraries..."
-        - In the "Find a Library" text box, enter the script ID 1B7FSrk5Zi6L1rSxxTDgDEUsPzlukDsi4KGuTMorsTQHhGBzBkMun4iDF and click the "Select" button.
-        - Choose a version in the dropdown box (usually best to pick the latest version).
-        - Click the "Save" button.
-   b) Copy and paste the files in the /dist directory directly into your script project. (currently there is only 1: OAuth2.gs)
-      You can find it at https://github.com/gsuitedevs/apps-script-oauth2/tree/master/dist
-   If you are setting explicit scopes in your manifest file, ensure that the following scope is included: https://www.googleapis.com/auth/script.external_request
-   
-   More info on setting up oAuth2 library here https://github.com/googlesamples/apps-script-oauth2
-   
-
-Important: you are restricted by Google Apps Script quotas. 
-The two you are most likely to hit into are runtime and UrlFetchApp. 
-1) The maximum runtime for a script is 6 minutes and if you are processing lots of files you may have to run in batches. 
+Important: you are restricted in what you do by the Google Apps Script quotas. 
+The two you are most likely to hit into are: 
+1) The maximum runtime for a script is 6 minutes. If you are processing lots of files you may have to run it in batches. 
 2) The URLfetch (the HTTP/HTTPS service used to make the API calls) has a 10MB maximum payload size per call.
-   Therefore, if you are planning on using anything bigger than 10 MB you need a different solution, 
-   For videos, you may look into the YouTube API service at https://developers.google.com/apps-script/advanced/youtube
+   so for anything bigger than 10 MB you need a different solution, 
    
 */
 
@@ -90,7 +64,9 @@ function printSVal(key) {
 // ******************************************************************************************************
 function onOpen(){
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var menuEntries = [{name: "Configure github connection", functionName: "githubConfigure"}]; 
+  var menuEntries = [{name: "Configure the github repo", functionName: "githubRepoConfigure"},
+                     {name: "Set GitHub authentication", functionName: "setGithubAuthToken"}
+                    ]; 
   ss.addMenu("GitHub", menuEntries);
 }
 
@@ -99,40 +75,31 @@ function onOpen(){
 // ******************************************************************************************************
 // Function to store the github details of the user and repo, and store what is necessary for future calls
 // ******************************************************************************************************
-function githubConfigure() {
+function githubRepoConfigure() {
   
-  var gh_user = Browser.inputBox("Enter your GitHub username", "GitHub username", Browser.Buttons.OK);
+  var gh_user = Browser.inputBox("Enter the GitHub username of the repo owner", "GitHub username", Browser.Buttons.OK);
   PropertiesService.getScriptProperties().setProperty("gh_user", gh_user); 
-  
-  var gh_password = Browser.inputBox("Enter your GitHub password (it will not be stored)", "GitHub password", Browser.Buttons.OK);
   
   var gh_repo = Browser.inputBox("Enter your GitHub repo", "GitHub repo", Browser.Buttons.OK);
   PropertiesService.getScriptProperties().setProperty("gh_repo", gh_repo);  
-      
-  var gh_clientId = Browser.inputBox("Enter the GitHub project client ID", "Client ID", Browser.Buttons.OK);
-  PropertiesService.getScriptProperties().setProperty("gh_clientId", gh_clientId);
   
-  var gh_clientSecret = Browser.inputBox("Enter the GitHub project Secret", "Client Secret", Browser.Buttons.OK);
-  //var git_clientSecret = Utilities.base64Encode(gh_clientSecret);
-  PropertiesService.getScriptProperties().setProperty("gh_clientSecret", gh_clientSecret);
-    
+ }  
+
+
+function setGithubAuthToken() {
   
-  //Now make a call to GitHub and use Basic Auth to get an OAuth token 
-  
-  //note is required!
-  var payloadParams = {
-    scopes: [
-      'repo',
-      'gist'
-    ],
-    note: 'gas-github_' + Date.now()  
-  }
-  
-  var url = 'https://api.github.com/authorizations';  
-  
+  //get the user details
+  var git_user = Browser.inputBox("Enter your GitHub username", "GitHub username", Browser.Buttons.OK); 
+  PropertiesService.getUserProperties().setProperty("git_user", git_user); 
+  var git_password = Browser.inputBox("Enter your GitHub password (it will not be stored)", "GitHub password", Browser.Buttons.OK);
   //base64 encode the username:pwd to create the Basic authentication that you need to access the OAUTH API
   var authString = Utilities.base64Encode(git_user + ':' + git_password);
   
+  
+  //Now make a call to GitHub and use Basic Auth to get an OAuth token 
+  var url = 'https://api.github.com/authorizations';  
+   
+  //note is required
   var payloadParams = {
     scopes: [
       'repo',
@@ -155,9 +122,29 @@ function githubConfigure() {
     Logger.log(response);
     var response_JSON = JSON.parse(response);
  	var gh_token = response_JSON.token;
-    PropertiesService.getScriptProperties().setProperty("gh_token", gh_token);
+    PropertiesService.getUserProperties().setProperty("git_token", git_token);
   } else {
     Logger.log("There was an error when trying to create the authorisation token.");
 	throw new Error(response.getContentText());
   }
-}  
+
+}
+
+
+
+// ******************************************************************************************************
+// Function to convert a string into a SEO-friendly URL
+// from https://stackoverflow.com/questions/14107522/producing-seo-friendly-url-in-javascript
+// ******************************************************************************************************
+function toSeoUrl(url) {
+    return url.toString()               // Convert to string
+        .normalize('NFD')               // Change diacritics
+        .replace(/[\u0300-\u036f]/g,'') // Remove illegal characters
+        .replace(/\s+/g,'-')            // Change whitespace to dashes
+        .toLowerCase()                  // Change to lowercase
+        .replace(/&/g,'-and-')          // Replace ampersand
+        .replace(/[^a-z0-9\-]/g,'')     // Remove anything that is not a letter, number or dash
+        .replace(/-+/g,'-')             // Remove duplicate dashes
+        .replace(/^-*/,'')              // Remove starting dashes
+        .replace(/-*$/,'');             // Remove trailing dashes
+}
