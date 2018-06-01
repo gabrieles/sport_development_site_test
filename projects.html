@@ -13,10 +13,11 @@
              <div class="form-group">
                <label for="sel1">Filter by project theme</label>
                <select class="form-control" id="sel1">
-                 <option>Theme1</option>
-                 <option>Theme2</option>
-                 <option>Theme3</option>
-                 <option>Theme4</option>
+                 <option>Gender equality</option>
+                 <option>Health</option>
+                 <option>Inclusion</option>
+                 <option>Peace building</option>
+                 <option>Youth development</option>
                </select>
              </div>
            </div>
@@ -25,10 +26,13 @@
              <div class="form-group">
                <label for="sel1">Filter by location</label>
                <select class="form-control" id="sel1">
-                 <option>Country1</option>
-                 <option>Country2</option>
-                 <option>Country3</option>
-                 <option>Country4</option>
+                 <option>Cambodia</option>
+                 <option>Haiti</option>
+                 <option>India</option>
+                 <option>Jordan</option>
+                 <option>Venezuela</option>
+                 <option>Uganda</option>
+                 <option>United Kingdom</option>
                </select>
              </div>
            </div>
@@ -50,25 +54,8 @@
         <div class="row">
           <div class="col-lg-12">
              <div class="table-responsive table-hover table-bordered">
-             <table id="projects-table" class="table">
-               <tr>
-                 <td> <a href="#">project 1 title</a> </td>
-                 <td> theme1 </td>
-                 <td> location1 </td>
-                 <td> support type1 </td>
-               </tr>
-               <tr>
-                 <td> <a href="#">project 3 title</a> </td>
-                 <td> theme2 </td>
-                 <td> location2 </td>
-                 <td> support type2 </td>
-               </tr>
-               <tr>
-                 <td> <a href="#">project 3 title</a> </td>
-                 <td> theme3 </td>
-                 <td> location3 </td>
-                 <td> support type3 </td>
-               </tr>
+             <table id="projects" class="table">
+             
              </table>
              </div>
           </div>
@@ -76,4 +63,15 @@
       </div>
 </section>
 
+<script>
+function pageFunction() {
+  createProjectsTable('projects/projects.json','projects');
+}
 
+$('select').on('change', function() {
+  var value = this.value.toLowerCase();
+  $("#projects-table tr").filter(function() {
+    $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+  });
+})
+</script>

@@ -103,14 +103,15 @@ function onOpen(){
 function generateProjectHTML(id) {
   
   var html = '';
-  
+  var idString = id.toString();
   var data = sheet2Json('Projects');
-    
-  //filter the data tu see only the entries marked for inclusion in the homepage
-  var projectData = data.filter(function (entry) {
-    return entry.id === id;
+  //filter the data to get the project with thr required id
+  var projectDataArray = data.filter(function (entry) {
+    return entry.id == idString;
   });
-    
+  //the above returns an array - you want just the first item
+  var projectData = projectDataArray[0];
+  
   var bodyClass = 'project-page';
 
   html += '<!DOCTYPE html>' +
@@ -130,8 +131,8 @@ function generateProjectHTML(id) {
     html += '<header class="masthead" style="background-image: url(' + headerImage_url + ')">' +
 			  '<div class="container">' +
 				'<div class="intro-text">' +
-					'<div class="intro-lead-in">' + projectData.headline + '</div>' +
-					'<div class="intro-heading text-uppercase">' + projectData.title + '</div>' +
+					'<div class="intro-lead-in">' + projectData['headline'] + '</div>' +
+					'<div class="intro-heading text-uppercase">' + projectData['title'] + '</div>' +
 					'<a class="btn btn-primary btn-xl text-uppercase js-scroll-trigger" href="#donate">Give</a>' +
 				'</div>' +
 			  '</div>' +
@@ -176,7 +177,6 @@ function generateProjectHTML(id) {
   if(projectData.equipment_text) { colCount = colCount+1 }
   if(projectData.service_text) { colCount = colCount+1 }
 	
-  //colCount should always be > 0... 
   if (colCount> 0) {
     var colSize = 12/colCount;
     
@@ -235,11 +235,22 @@ function generateProjectHTML(id) {
 			          '</section>';
   }
 	
-  // Team 
+  // Team - TODO
   if(projectData.has_team) {
     html += '<section class="bg-light" id="team">' +
 			'</section>';
   }
+  
+  // Links - TODO
+  var colCount = 0;
+  if(projectData.facebook_url) { colCount = colCount+1 }
+  if(projectData.twitter_url) { colCount = colCount+1 }
+  if(projectData.site_url) { colCount = colCount+1 }
+  
+  if (colCount> 0) {
+    var colSize = 12/colCount;
+    
+  }  
     
   html += getContent('footer') + 
         '</body>' +
@@ -248,7 +259,6 @@ function generateProjectHTML(id) {
   return html;
 
 }	
-
 
 
 // ******************************************************************************************************

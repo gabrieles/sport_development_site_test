@@ -1,3 +1,7 @@
+function updateOneProject(){
+  updateProjectPage(345);
+}
+
 function updateProjectsJSON(){
   var outJson = sheet2Json('Projects');
   var path = 'projects/projects.json';
@@ -68,11 +72,16 @@ function updateMainJS() {
   var fileContent = html;
   var message = 'updated page via gSuite';
   var branch = 'master';
-   updateFile(path, fileContent, message, branch);
+  updateFile(path, fileContent, message, branch);
 }
 
-function create1(){
-  createProjectPage(1);
+function updateProjectPage(id) {
+  var html = generateProjectHTML(id);
+  var path = "projects/" + id.toString() + '.html';
+  var fileContent = html;
+  var message = 'create page via gSuite';
+  var branch = 'master';
+  updateFile(path, fileContent, message, branch);
 }
 
 function createProjectPage(id) {
