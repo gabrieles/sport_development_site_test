@@ -1,57 +1,114 @@
-(function($) {
-  "use strict"; // Start of use strict
+function addProjectThumbs(jsonPath, title, headline, elementId){
 
-  // Smooth scrolling using jQuery easing
-  $('a.js-scroll-trigger[href*="#"]:not([href="#"])').click(function() {
-    if (location.pathname.replace(/^\//, '') == this.pathname.replace(/^\//, '') && location.hostname == this.hostname) {
-      var target = $(this.hash);
-      target = target.length ? target : $('[name=' + this.hash.slice(1) + ']');
-      if (target.length) {
-        $('html, body').animate({
-          scrollTop: (target.offset().top - 54)
-        }, 1000, "easeInOutExpo");
-        return false;
-      }
-    }
-  });
+$.getJSON(jsonPath, function(data) {
+    
+    //filter the data tu see only the entries marked for inclusion in the homepage
+    var homepageData = data.filter(function (entry) {
+      return entry.on_homepage === 1;
+    });
+    
+	//create section header
+	var html = '<div class="container">' +
+				'<div class="row">' +
+					'<div class="col-lg-12 text-center">' +
+						'<h2 class="section-heading text-uppercase">' + title + '</h2>' +
+						'<h3 class="section-subheading text-muted">' + headline + '</h3>' +
+					'</div>' +
+				'</div>';
+	//open first row
+	html += '<div class="row">';
+    
+	$.each(homepageData, function(key, proj){
+		if (key>0 && key % 3 == 0) {
+			html += '</div><div class="row">';	
+		}
+		html += '<div class="col-md-4 col-sm-12 project-item">' +
+				  '<a class="project-link" href="/projects/' + proj.id + '">' +
+				    '<div class="project-hover">' +
+                      '<div class="project-hover-content">' +
+					    '<i class="fa fa-plus fa-3x"></i>' +
+                      '</div>' +
+				    '</div>' +
+				    '<img class="img-fluid" src="' + proj.img_thumb + '" alt="">' +
+				  '</a>' +
+				  '<div class="project-caption">' +
+				    '<h4>' + proj.short_title + '</h4>' +
+				    '<p class="text-muted">' + proj.headline + '</p>' +
+				  '</div>' +
+				'</div>';
+	});
+	//close last row, add button, and close the container
+	html += '</div>' +
+            '<div class="row">' +
+              '<div class="col-lg-12 text-center">' +
+		        '<a class="btn btn-primary btn-xl text-uppercase js-scroll-trigger" href="projects">Show Me More</a>' +
+		      '</div>' +
+		    '</div>' +
+          '</div>';	
+    elementId = "#" + elementId;
+    $( elementId ).html(html);
+});
+}
 
-  // Closes responsive menu when a scroll trigger link is clicked
-  $('.js-scroll-trigger').click(function() {
-    $('.navbar-collapse').collapse('hide');
-  });
 
-  // Activate scrollspy to add active class to navbar items on scroll
-  $('body').scrollspy({
-    target: '#mainNav',
-    offset: 56
-  });
-
-  // Collapse Navbar
-  var navbarCollapse = function() {
-    if ($("#mainNav").offset().top > 100) {
-      $("#mainNav").addClass("navbar-shrink");
-    } else {
-      $("#mainNav").removeClass("navbar-shrink");
-    }
-  };
-  // Collapse now if page is not at top
-  navbarCollapse();
-  // Collapse the navbar when page is scrolled
-  $(window).scroll(navbarCollapse);
-
-  // Hide navbar when modals trigger
-  $('.portfolio-modal').on('show.bs.modal', function(e) {
-    $(".navbar").addClass("d-none");
-  })
-  $('.portfolio-modal').on('hidden.bs.modal', function(e) {
-    $(".navbar").removeClass("d-none");
-  })
-  
-  if (typeof pageFunction === 'function') { 
-    pageFunction(); 
-  } else {
-    console.log('no pageFunction');
-  }
-  
-})(jQuery); // End of use strict
+      
+function addTeam(jsonPath, title, headline, elementId, message){
+$.getJSON("/team.json", function(data) {
+	//create section header
+	var html = '<div class="container">' +
+				'<div class="row">' +
+					'<div class="col-lg-12 text-center">' +
+						'<h2 class="section-heading text-uppercase">' + title + '</h2>' +
+						'<h3 class="section-subheading text-muted">' + headline + '</h3>' +
+					'</div>' +
+				'</div>';
+    //open first row
+	html += '<div class="row">';		
+	$.each(data, function(key, member){
+		if (key>0 && key % 3 == 0) {
+			html += '</div><div class="row">';	
+		}
+		html += '<div class="col-sm-4">' +
+            '<div class="team-member">' +
+              '<img class="mx-auto rounded-circle" src="' + member.img_thumb + '" alt="">' +
+              '<h4>' + member.name + '</h4>' +
+              '<p class="text-muted">' + member.title + '</p>' +
+              '<ul class="list-inline social-buttons">';
+        if (member.twitter) {
+			html += '<li class="list-inline-item">' +
+                      '<a href="' + member.twitter + '">' +
+                        '<i class="fab fa-twitter"></i>' +
+                      '</a>' +
+                     '</li>';
+		}	
+		if (member.facebook) {
+            html += '<li class="list-inline-item">' +
+                       '<a href="' + member.facebook + '">' +
+						  '<i class="fab fa-facebook-f"></i>' +
+                       '</a>' +
+					'</li>';
+		}
+        if (member.linkedin) {			
+            html += '<li class="list-inline-item">' +
+                      '<a href="' + member.linkedin + '">' +
+                        '<i class="fab fa-linkedin"></i>' +
+                      '</a>' +
+                    '</li>';
+		}
+        html += '</ul>' +
+            '</div>' +
+          '</div>';
+	});
+	//close last row and container
+	html += '</div>' +
+          '</div>' +
+          '<div class="row">' +
+          '<div class="col-lg-8 mx-auto text-center">' +
+            '<p class="large text-muted">' + message + '</p>' +
+          '</div>' +
+        '</div>';
+    elementId = '#' + elementId;
+    $(elementId).html(html);
+});
+}
 
