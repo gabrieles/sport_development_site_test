@@ -217,7 +217,7 @@ function getFileSha(path){
 
 
 // ******************************************************************************************************
-// Function to update a file in a github repo. 
+// Function to update a page in a github repo. 
 // See https://developer.github.com/v3/repos/contents/#create-a-file
 // IN:
 //   Required:
@@ -231,7 +231,7 @@ function getFileSha(path){
 //   True (the file was created)
 //   False (the file was not created)
 // ******************************************************************************************************
-function updateFile(path, fileContent, message, branch, sha) {
+function updatePage(path, fileContent, message, branch, sha) {
 
   if (typeof message === 'undefined') { message = 'Created on ' + Date.now(); }
   if (typeof branch === 'undefined') { branch = 'master' }
@@ -277,6 +277,9 @@ function updateFile(path, fileContent, message, branch, sha) {
   }
     
 }
+
+
+
 
 
 // ******************************************************************************************************
@@ -419,7 +422,7 @@ function commitSingleJSONFileToGithub(gh_filename, json_string, branch, gh_commi
   } catch(e) {
     Logger.log('update');
     var git_file_obj = Github.Repository.getContents({ref: branch}, gh_filename);
-    Github.Repository.updateFile(branch, gh_filename, JSON.stringify(json_string), git_file_obj.sha, gh_commit_message);
+    Github.Repository.updatePage(branch, gh_filename, JSON.stringify(json_string), git_file_obj.sha, gh_commit_message);
   }
 }
 
@@ -988,7 +991,7 @@ var Github = (function() {
     * @param {boolean} [options.encode] - true if the content should be base64 encoded
     * @return {Promise} - the promise for the http request
     */
-   self_.Repository.updateFile = function(branch, path, content, sha, message, options) {
+   self_.Repository.updatePage = function(branch, path, content, sha, message, options) {
       options = options || {}
       var filePath = path ? encodeURI(path) : '';
       var shouldEncode = options.encode || true;

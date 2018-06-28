@@ -70,7 +70,7 @@ function pageFunction() {
 
 $('select').on('change', function() {
   var value = this.value.toLowerCase();
-  $("#projects-table tr").filter(function() {
+  $("#projects tr").filter(function() {
     $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
   });
 })

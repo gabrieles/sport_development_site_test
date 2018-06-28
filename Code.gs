@@ -8,9 +8,9 @@ To run the script that interact with Google drive, you need to enable the Google
 You can do it by clikcing on "Tools > Script Editor" and then on "Resources > Advanced Google Services"
 
 Important: the REST calls are restricted by the Google Apps Script quotas. The two you are most likely to hit into are: 
-1) The maximum runtime for a script is 6 minutes. If you are processing lots of files you may have to run it in batches. 
-2) The URLfetch (the HTTP/HTTPS service used to make the API calls) has a 10MB maximum payload size per call.
-   so for anything bigger than 10 MB you need a different solution, 
+1) The maximum runtime for a script is 6 minutes. Individual scripts have a limit of 30 seconds. 
+2) The URLfetch (the HTTP/HTTPS service used to make the API calls) has a 20MB maximum payload size per call.
+   For full details, see https://developers.google.com/apps-script/guides/services/quotas   
    
 */
 
@@ -26,7 +26,7 @@ function doGet(e) {
 
   var htmlOutput = template.evaluate()
                    .setSandboxMode(HtmlService.SandboxMode.IFRAME)
-                   .setTitle('Dashboard WFDF Sport Dev')
+                   .setTitle('Dashboard ToGetThere')
                    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
                    .setFaviconUrl('http://threeflamesproductions.com/wp-content/uploads/2017/01/Favicon_ThreeFlames_FireIcon_Color.png');
 
@@ -47,8 +47,8 @@ function getContent(filename) {
 // ******************************************************************************************************
 // Function to return the full HTML of a page by stitching together different page components
 // ******************************************************************************************************
-function createHTML(pagename, pageTitle, bodyClass) {
- 
+function createHTML(pageID, pageTitle, bodyClass) {
+  
   var html = '<!DOCTYPE html>' +
              '<html>' +
                '<head>' +
@@ -58,13 +58,60 @@ function createHTML(pagename, pageTitle, bodyClass) {
                '</head>' +
                '<body id="page-top" class="' + bodyClass + '">' +
                getContent('navigation') +  
-               getContent(pagename) +
+               getContent(pageID) +
                getContent('footer') + 
                '</body>' +
              '</html>'  
   return html;               
 }
 
+
+// ******************************************************************************************************
+// Function to return links to the main css and JS files with their respective version numbers
+// ******************************************************************************************************
+function createLinksToJSandCSS() {
+  var out = '<script src="js/main.js?v=' + printVal('js_version') + '"></script>' +
+            '<link href="/css/main.css?v=' + printVal('css_version') + '" rel="stylesheet">';
+  return out;
+}
+
+
+// ******************************************************************************************************
+// Function to return the full HTML of a page by stitching together different page components
+// ******************************************************************************************************
+function createUtilityPageHTML(pageID, pageTitle, bodyClass) {
+  
+  if (typeof bodyClass === 'undefined') { 
+    bodyClass = ' ' + bodyClass; 
+  } else {
+     bodyClass = ''; 
+  }
+  
+  var pageBody = '<section>' +
+                   '<div class="container">' +
+		             '<div class="row">' +
+		               '<div class="col-lg-12">' +
+                         getHTMLfromGDocID(pageID) +
+                       '</div>' +
+		             '</div>' +
+	               '</div>' +
+                 '</section>'; 
+  
+  var html = '<!DOCTYPE html>' +
+             '<html>' +
+               '<head>' +
+                 '<base target="_top">' + 
+                  getContent('head') +                   
+                  '<title>' + pageTitle + '</title>' +
+               '</head>' +
+               '<body id="page-top" class="utility-page' + bodyClass + '">' +
+               getContent('navigation') +  
+               pageBody +
+               getContent('footer') + 
+               '</body>' +
+             '</html>'  
+  return html;               
+}
 
 
 // ******************************************************************************************************
@@ -145,7 +192,11 @@ function generateProjectHTML(id) {
   if (projectData.top_row) { 
     html += '<div class="row">' +
               '<div class="col-lg-12">' +
-                projectData.top_row +
+                '<blockquote class="blockquote">' +
+                  '<p>' +
+                    projectData.top_row +
+                  '</p>' +    
+                '</blockquote>' +   
               '</div>' +
             '</div>';
   }
@@ -153,12 +204,12 @@ function generateProjectHTML(id) {
   if (projectData.middle_row) { 
     html += '<div class="row">' +
               '<div class="col-lg-12">' +
-                projectData.middle_row +
+                getHTMLfromGDocID(projectData.middle_row) +
               '</div>' +
             '</div>';
   }
     
-	
+  //add code for carousel...	
   if (projectData.bottom_row) { 
     html += '<div class="row">' +
               '<div class="col-lg-12">' +
