@@ -21,11 +21,6 @@ function getFilesToLog(){
   Logger.log(out)  
 }
 
-function getFilesToLog(){
-  var out = DriveApp.getFiles()
-  Logger.log(out)  
-}
-
 function getHTMLfromGDocID(fileID){
   var forDriveScope = DriveApp.getStorageUsed();
   var url = "https://docs.google.com/feeds/download/documents/export/Export?id="+fileID+"&exportFormat=html";
@@ -42,9 +37,6 @@ function getHTMLfromGDocID(fileID){
   return(bodyHtml);  
 }
 
-function testget(){
-  getFileContentFromName('termextraction.html');
-}
 
 function getFileContentFromName(fileName) {
   var files = DriveApp.getFilesByName(fileName);

@@ -1,10 +1,5 @@
-//set the global vars
-var sheetID = "1qPR7oEYMi-Rzfr-D8nTqUDH5kWdX43PbP9tmeIrDI3s"; //needed as you cannot use getActiveSheet() while the sheet is not in use (as in a standalone application like this one)
-var scriptURL = "https://script.google.com/macros/s/AKfycbytiMYA6sUnb5dRE3yVzXUJApEDzk5f9Sm_Ihx1pXI0NW4pfLk/exec";  //the URL of this web app
-
-
 /* 
-To run the script that interact with Google drive, you need to enable the Google Drive API: 
+To run the script that interact with Google drive, you need to enable the Google Drive API: data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAALCAYAAACprHcmAAAA6klEQVQY05WRzwqCQBCH94GiS+Ah6A8EXXwQ7wsqKGqCStAz9B7R2TqZdpAMCopOvUPQ9huZhfLW4WOY3367jKNwXVeAAliO44ggCESSJG2lHvkCbMjTogInHA468gz5DbzJI9kCD7qAwyMkg+U5+jM/VJMneIwxuNi2rSCVWZatURvqkR+AocdowSsT3/f3kBSqCsOQ6ha5oZ1vWcRxvCJZStnKURRJ/shfGZh4qSSZINnzvBz5tCub4M4z52maLlErnrnWF/Qen7yNHaQ+b2OEvuJtXMkTvHAKChz2OnseIm/Aizzxzx/8AIvX4+gc2zPQAAAAAElFTkSuQmCC
 You can do it by clikcing on "Tools > Script Editor" and then on "Resources > Advanced Google Services"
 
 Important: the REST calls are restricted by the Google Apps Script quotas. The two you are most likely to hit into are: 
@@ -26,7 +21,7 @@ function doGet(e) {
 
   var htmlOutput = template.evaluate()
                    .setSandboxMode(HtmlService.SandboxMode.IFRAME)
-                   .setTitle('Dashboard ToGetThere')
+                   .setTitle('Dashboard Development')
                    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
                    .setFaviconUrl('http://threeflamesproductions.com/wp-content/uploads/2017/01/Favicon_ThreeFlames_FireIcon_Color.png');
 
@@ -36,7 +31,7 @@ function doGet(e) {
 
 
 // ******************************************************************************************************
-// Function to print out the content of an HTML file into another (used to load the CSS and JS)
+// Function to print out the content of a file
 // ******************************************************************************************************
 function getContent(filename) {
   var pageContent = HtmlService.createTemplateFromFile(filename).getRawContent();
@@ -45,7 +40,7 @@ function getContent(filename) {
 
 
 // ******************************************************************************************************
-// Function to return the full HTML of a page by stitching together different page components
+// Function to return the full HTML of a page by stitching together all page components
 // ******************************************************************************************************
 function createHTML(pageID, pageTitle, bodyClass) {
   
@@ -55,11 +50,12 @@ function createHTML(pageID, pageTitle, bodyClass) {
                  '<base target="_top">' + 
                   getContent('head') +                   
                   '<title>' + pageTitle + '</title>' +
+                  createLinksToJSandCSS() +  
                '</head>' +
                '<body id="page-top" class="' + bodyClass + '">' +
-               getContent('navigation') +  
-               getContent(pageID) +
-               getContent('footer') + 
+                 getContent('navigation') +  
+                 getContent(pageID) +
+                 getContent('footer') + 
                '</body>' +
              '</html>'  
   return html;               
@@ -103,11 +99,12 @@ function createUtilityPageHTML(pageID, pageTitle, bodyClass) {
                  '<base target="_top">' + 
                   getContent('head') +                   
                   '<title>' + pageTitle + '</title>' +
+                  createLinksToJSandCSS() +  
                '</head>' +
                '<body id="page-top" class="utility-page' + bodyClass + '">' +
-               getContent('navigation') +  
-               pageBody +
-               getContent('footer') + 
+                 getContent('navigation') +  
+                 pageBody +
+                 getContent('footer') + 
                '</body>' +
              '</html>'  
   return html;               
@@ -136,9 +133,10 @@ function printVal(key) {
 function onOpen(){
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var menuEntries = [{name: "Configure the github repo", functionName: "githubRepoConfigure"},
-                     {name: "Set GitHub authentication", functionName: "setGithubAuthToken"}
+                     {name: "Set GitHub authentication", functionName: "setGithubAuthToken"},
+                     {name: "Configure the Cloudinary API", functionName: "cloudinaryConfigure"},
                     ]; 
-  ss.addMenu("GitHub", menuEntries);
+  ss.addMenu("Configure", menuEntries);
 }
 
 
@@ -152,7 +150,7 @@ function generateProjectHTML(id) {
   var html = '';
   var idString = id.toString();
   var data = sheet2Json('Projects');
-  //filter the data to get the project with thr required id
+  //filter the data to get the project with the required id
   var projectDataArray = data.filter(function (entry) {
     return entry.id == idString;
   });
@@ -166,7 +164,8 @@ function generateProjectHTML(id) {
               '<head>' +
                 '<base target="_top">' + 
                 getContent('head') +                   
-                '<title>' + projectData.title + ' - ToGetThere</title>' +
+                '<title>' + projectData.title + ' - WDFD Development</title>' +
+                createLinksToJSandCSS() +  
               '</head>' +
               '<body id="page-top" class="' + bodyClass + '">' +
                 getContent('navigation');  
@@ -189,31 +188,31 @@ function generateProjectHTML(id) {
   html += '<section id="description">' +
      	    '<div class="container">';
     
-  if (projectData.top_row) { 
+  if (projectData.quote) { 
     html += '<div class="row">' +
               '<div class="col-lg-12">' +
                 '<blockquote class="blockquote">' +
                   '<p>' +
-                    projectData.top_row +
+                    projectData.quote +
                   '</p>' +    
                 '</blockquote>' +   
               '</div>' +
             '</div>';
   }
     
-  if (projectData.middle_row) { 
+  if (projectData.description) { 
     html += '<div class="row">' +
               '<div class="col-lg-12">' +
-                getHTMLfromGDocID(projectData.middle_row) +
+                getHTMLfromGDocID(projectData.description) +
               '</div>' +
             '</div>';
   }
-    
-  //add code for carousel...	
-  if (projectData.bottom_row) { 
+    	
+  if (projectData.carouselJSON) { 
+    var carouselID = 'carousel-' + id;
     html += '<div class="row">' +
               '<div class="col-lg-12">' +
-                projectData.bottom_row +
+                generateCarousel(carouselID, projectData.carouselJSON) +
               '</div>' +
             '</div>';
   }
@@ -313,33 +312,26 @@ function generateProjectHTML(id) {
 
 
 // ******************************************************************************************************
-// Get the content of a google sheet and convert it into a json - from https://gist.github.com/daichan4649/8877801
+// Get the content of a google sheet and convert it into a json - based on https://gist.github.com/daichan4649/8877801 but with performance improvements
 // ******************************************************************************************************
-function convertSheet2JsonText(sheet) {
-  // first line(title)
-  var colStartIndex = 1;
-  var rowNum = 1;
-  var firstRange = sheet.getRange(1, 1, 1, sheet.getLastColumn());
-  var firstRowValues = firstRange.getValues();
-  var titleColumns = firstRowValues[0];
-
-  // after the second line(data)
+function sheet2Json(sheetName) {
+  var sheet = SpreadsheetApp.getActive().getSheetByName(sheetName);
+  
+  //get all values
   var lastRow = sheet.getLastRow();
-  var rowValues = [];
-  for(var rowIndex=2; rowIndex<=lastRow; rowIndex++) {
-    var colStartIndex = 1;
-    var rowNum = 1;
-    var range = sheet.getRange(rowIndex, colStartIndex, rowNum, sheet.getLastColumn());
-    var values = range.getValues();
-    rowValues.push(values[0]);
-  }
+  var lastCol = sheet.getLastColumn()
+  var range = sheet.getRange(1, 1, lastRow, lastCol);
+  var allValues = range.getValues();
+  
+  //first row is for the property titles
+  var titleColumns = allValues[0];
 
   // create json
   var jsonArray = [];
-  for(var i=0; i<rowValues.length; i++) {
-    var line = rowValues[i];
+  for(var i=1; i<lastRow; i++) {
+    var line = allValues[i];
     var json = new Object();
-    for(var j=0; j<titleColumns.length; j++) {
+    for(var j=0; j<lastCol; j++) {
       json[titleColumns[j]] = line[j];
     }
     jsonArray.push(json);
@@ -347,14 +339,97 @@ function convertSheet2JsonText(sheet) {
   return jsonArray;
 }
 
+
 // ******************************************************************************************************
-// Wrapper for the convertSheet2JsonText - pass the sheetName to get the JSOn array out
+// Take the output of a google form with a list of image files, and create an array with the file IDS
 // ******************************************************************************************************
-function sheet2Json(sheetName) {
-  var ss = SpreadsheetApp.openById(sheetID);
-  var sheets = ss.getSheets();
-  var sh = ss.getSheetByName(sheetName);
-  return convertSheet2JsonText(sh);
+function generateFileIDArrayFromFileList(fileList){
+  var stringsArray = fileList.split(' ,');
+  var outArray = [];
+  for(var i=0; i<stringsArray.length; i++) {
+    var fileID = stringsArray[i].split('=')[1];
+    outArray.push(fileID);
+  }
+  return outArray;
+}
+
+
+// ******************************************************************************************************
+// Take the output of generateFileIDArrayFromFileList, upload all images to gitHub, and return an array with their URL
+// ******************************************************************************************************
+function uploadImagesFromArray(folder, fileIDArray){
+  // create json
+  var jsonArray = [];  
+
+  for(var i=0; i<fileIDArray.length; i++) {
+    var json = new Object();
+    
+    json['type'] = 'image';
+
+    var fileID = fileIDArray[i];
+    var fileName = 'image_' + i;
+    var path = generateImagePath(folder, fileName);
+    createImage(fileID, path);
+
+    json['url'] = path;
+    
+    jsonArray.push(json);
+  }  
+  return jsonArray;
+}
+
+
+// ******************************************************************************************************
+// Take the folder and file name and generate the output URL
+// ******************************************************************************************************
+function generateImagePath(folder, fileName){
+  var fileType = DriveApp.getFileById(fileID).getMimeType();
+  switch(fileType) {
+    case 'image/bmp':
+      var fileExt = '.bmp';
+      break;
+    case 'image/gif':
+      var fileExt = '.gif';
+      break;
+    case 'image/jpeg':
+      var fileExt = '.jpg';
+      break;
+    case 'image/png':
+      var fileExt = '.png';
+      break;
+    default:
+      //nothing      
+  }
+  
+  //Add a / at the end of the folder name if necessary
+  if (folder.length > 0 && folder.slice(-1) != "/") { folder += "/" }
+  
+  var path = folder + fileName + fileExt;
+  
+  return path;
+}
+
+
+// ******************************************************************************************************
+// Take the folder and the output of generateFileIDArrayFromFileList, and generate the JSON for the carousel
+// ******************************************************************************************************
+function createJSONFromArray(folder, fileIDArray){
+
+  // create json
+  var jsonArray = [];  
+  for(var i=0; i<fileIDArray.length; i++) {
+    var json = new Object();
+    
+    json['type'] = 'image';
+    
+    var fileID = fileIDArray[i];
+    var fileName = 'image_' + i;
+    var path = generateImagePath(folder, fileName);
+    json['url'] = path;
+    
+    jsonArray.push(json);
+  }  
+  return jsonArray;  
 }
 
 // ******************************************************************************************************
@@ -372,4 +447,66 @@ function toSeoUrl(textToConvert) {
         .replace(/-+/g,'-')             // Remove duplicate dashes
         .replace(/^-*/,'')              // Remove starting dashes
         .replace(/-*$/,'');             // Remove trailing dashes
+}
+
+
+
+// ******************************************************************************************************
+// Function to generate the HTML for a carousel from a path to a JSON file
+// ******************************************************************************************************
+function generateCarousel(itemID, linksJSON){
+    
+  var html = '<div id="' + itemID + '" class="carousel slide" data-ride="carousel">';
+  
+  var data = linksJSON;
+  
+  //indicators
+  html += '<ul class="carousel-indicators">' +
+            '<li data-target="#' + itemID + '" data-slide-to="0" class="active"></li>';
+  
+  for(var i=1; i<data.length; i++){
+    html += '<li data-target="#' + itemID + '" data-slide-to="' + i + '"></li>';  
+  }
+  html += '</ul>'; 
+    
+    
+  //carousel
+  html += '<div class="carousel-inner">';
+    
+  var isActive = ' active';
+  
+  for(var j=0; j<data.length; j++){  
+    var slideEl = data[j];
+    switch(slideEl.type) {
+      case 'image':
+        html += '<div class="carousel-item' + isActive + '">' +
+                  '<img src="' + slideEl.url + '">' +   
+                '</div>';
+        break;
+      case 'youtube':
+        html += '<div class="carousel-item' + isActive + '">' +
+                  '<iframe src="' + slideEl.url + '" allow="autoplay; encrypted-media" allowfullscreen></iframe>' +
+                '</div>';  
+      default:
+      //do nothing  
+    }
+    isActive = '';
+  }  
+    
+  html += '</div>';
+    
+    
+  //controls
+  html += '<a class="carousel-control-prev" href="#' + itemID + '" data-slide="prev">' +
+            '<span class="carousel-control-prev-icon"></span>' +
+          '</a>' +
+          '<a class="carousel-control-next" href="#' + itemID + '" data-slide="next">' +
+            '<span class="carousel-control-next-icon"></span>' +
+          '</a>';
+  
+  
+  html += '</div>';
+  
+  return html;   
+
 }
