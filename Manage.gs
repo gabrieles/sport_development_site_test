@@ -1,3 +1,7 @@
+var policyFileID = "12kzgkjUvspUsMw4ZnliHawTbTYeKjVW8n4tFWiBbwMI"
+var termsFileID = "'1J_-G_ASI_6Trh06TJNGH4l_NPwF1GaB3LcvOC8NsKKI'"
+
+
 function updateAllProjects(){
   updateProjectPage(1);
   updateProjectPage(2);
@@ -8,35 +12,19 @@ function updateAllProjects(){
   updateProjectPage(345);
 }
 
-function createTestImage2(){
-  var fileID = '132fuZpKLnVlxyQluEQllJVm5GBYaKMYz';
-  var folder = 'images';
-  var fileName = 'aaa';
-  var path = generateImagePath(folder, fileName);
-  createImage(fileID, path);
-}
-
-function createImage(fileID, path){
-  var fileContent = DriveApp.getFileById(fileID).getBlob().getBytes();
-  var message = 'image created via gSuite';
-  var branch = 'master';
-  createFile(path, fileContent, message, branch); 
-}
-
 
 function createTestImage(){
-  var path = 'test.jpg'
-  var fileID= '132fuZpKLnVlxyQluEQllJVm5GBYaKMYz';
-  var fileType = DriveApp.getFileById(fileID).getMimeType();
-  var fileName = DriveApp.getFileById(fileID).getName();
-  Logger.log(fileType)
-  Logger.log(fileName)
-  var fileContent = DriveApp.getFileById(fileID).getBlob().getBytes()
-  var message = 'image created via gSuite';
-  var branch = 'master';
-  createFile(path, fileContent, message, branch); 
+  var fileID = '1154hFm_EBRxiCCNX9NSvhbbMLJE5u945';
+  var folder = 'images';
+  var fileName = 'test';
+  var path = generateImagePath(fileID, folder, fileName);
+  createImageInGitHub(fileID, path);
 }
 
+function createImageInGitHub(fileID, path){
+  var fileContent = DriveApp.getFileById(fileID).getBlob().getBytes();
+  createFile(path, fileContent, 'image created via gSuite', 'master'); 
+}
 
 function updateHome() {
   var html = createHTML('home', 'WFDF Development - Home', 'homepage');
@@ -56,6 +44,24 @@ function updateProjectsJSON(){
   updatePage(path, fileContent, message, branch);
 }
 
+function updateResources() {
+  var html = createHTML('resources', 'WFDF Development - Resources', 'utility-page');
+  var path = 'resources.html'
+  var fileContent = html;
+  var message = 'updated page via gSuite';
+  var branch = 'master';
+  updatePage(path, fileContent, message, branch);
+}
+
+function updateResourcesJSON(){
+  var outJson = sheet2Json('Resources');
+  var path = 'resources/resources.json';
+  var fileContent = JSON.stringify(outJson);
+  var message = 'updated page via gSuite';
+  var branch = 'master';
+  updatePage(path, fileContent, message, branch);
+}
+
 function updateProjects() {
   var html = createHTML('projects', 'WFDF Development - Projects', 'utility-page');
   var path = 'projects.html'
@@ -67,7 +73,7 @@ function updateProjects() {
 
 
 function updatePrivacyPolicy() {
-  var html = createUtilityPageHTML('12kzgkjUvspUsMw4ZnliHawTbTYeKjVW8n4tFWiBbwMI', 'Privacy Policy - WFDF Development');
+  var html = createUtilityPageHTML(policyFileID, 'Privacy Policy - WFDF Development');
   var path = 'privacy-policy.html'
   var fileContent = html;
   var message = 'updated page via gSuite';
@@ -76,7 +82,7 @@ function updatePrivacyPolicy() {
 }
 
 function updateTerms() {
-  var html = createUtilityPageHTML('1J_-G_ASI_6Trh06TJNGH4l_NPwF1GaB3LcvOC8NsKKI', 'Terms of use - WFDF Development');
+  var html = createUtilityPageHTML(termsFileID, 'Terms of use - WFDF Development');
   var path = 'terms-of-use.html'
   var fileContent = html;
   var message = 'updated page via gSuite';
@@ -126,6 +132,8 @@ function updateProjectPage(id) {
   var branch = 'master';
   updatePage(path, fileContent, message, branch);
 }
+
+
 
 function createDevProjPage(){
   var html = createUtilityPageHTML('1iKVUfRALKMkcb1jBcV7LFEy67gTU_BdGfV_FzHfoPXU', 'Projects - WFDF Development');
@@ -200,7 +208,23 @@ function generateAllCoreFiles() {
   var message = 'updated page via gSuite';
   var branch = 'master';
   createFile(path, fileContent, message, branch);
+
+  //resources json
+  var outJson = sheet2Json('Resources');
+  var path = 'resources/resources.json';
+  var fileContent = JSON.stringify(outJson);
+  var message = 'created projects JSON via gSuite';
+  var branch = 'master';
+  createFile(path, fileContent, message, branch);
   
+  //Resources page
+  var html = createHTML('resources', 'WFDF Development - Projects', 'utility-page');
+  var path = 'resources.html'
+  var fileContent = html;
+  var message = 'updated page via gSuite';
+  var branch = 'master';
+  createFile(path, fileContent, message, branch);
+    
   //Privacy policy
   var html = createUtilityPageHTML('12kzgkjUvspUsMw4ZnliHawTbTYeKjVW8n4tFWiBbwMI', 'Privacy Policy - WFDF Development');
   var path = 'privacy-policy.html'

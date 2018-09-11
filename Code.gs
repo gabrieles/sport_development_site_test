@@ -39,6 +39,45 @@ function getContent(filename) {
 }
 
 
+function configureGoogleAnalytics() {
+  
+  var ga_trackingID = Browser.inputBox("Enter your Google Analytics Tracking ID", "Tracking ID", Browser.Buttons.OK);
+  PropertiesService.getScriptProperties().setProperty("ga_trackingID", ga_trackingID.trim()); 
+  
+  var gOptimiseID = Browser.inputBox("Enter your Google Optimise ID", "Google Optimise ID", Browser.Buttons.OK);
+  PropertiesService.getScriptProperties().setProperty("gOptimiseID", gOptimiseID.trim()); 
+ }  
+
+// ******************************************************************************************************
+// Function to return the code to run Google Analytics, Google Tag Manager, and Google Optimize
+// ******************************************************************************************************
+function addGoogleScriptSnippets(){
+  var html = ''
+  var ga_trackingID = printVal('ga_trackingID');
+  var gOptimiseID = printVal('gOptimiseID');
+  
+  html += "<style>.async-hide { opacity: 0 !important} </style>" +
+          "<script>" + 
+            "(function(a,s,y,n,c,h,i,d,e){s.className+=' '+y;h.start=1*new Date;" +
+            "h.end=i=function(){s.className=s.className.replace(RegExp(' ?'+y),'')};" +
+            "(a[n]=a[n]||[]).hide=h;setTimeout(function(){i();h.end=null},c);h.timeout=c;" +
+            "})(window,document.documentElement,'async-hide','dataLayer',4000,{'" + gOptimiseID + "':true});" + 
+          "</script>";
+
+  //code from https://support.google.com/optimize/answer/7513085?hl=en  
+  html += '<!-- Global site tag (gtag.js) - Google Analytics -->' +
+          '<script async src="https://www.googletagmanager.com/gtag/js?id=' + ga_trackingID + '"></script>' +
+          '<script>' +
+            'window.dataLayer = window.dataLayer || [];' +
+            'function gtag(){dataLayer.push(arguments);}';
+  html +=   "gtag('js', new Date());" +
+            "gtag('config', '" + ga_trackingID + "', { 'optimize_id': '" + gOptimiseID + "'});" +
+          "</script>";
+  
+  return html;            
+}
+
+
 // ******************************************************************************************************
 // Function to return the full HTML of a page by stitching together all page components
 // ******************************************************************************************************
@@ -47,6 +86,7 @@ function createHTML(pageID, pageTitle, bodyClass) {
   var html = '<!DOCTYPE html>' +
              '<html>' +
                '<head>' +
+                 addGoogleScriptSnippets() +
                  '<base target="_top">' + 
                   getContent('head') +                   
                   '<title>' + pageTitle + '</title>' +
@@ -96,6 +136,7 @@ function createUtilityPageHTML(pageID, pageTitle, bodyClass) {
   var html = '<!DOCTYPE html>' +
              '<html>' +
                '<head>' +
+                 addGoogleScriptSnippets() +
                  '<base target="_top">' + 
                   getContent('head') +                   
                   '<title>' + pageTitle + '</title>' +
@@ -135,6 +176,7 @@ function onOpen(){
   var menuEntries = [{name: "Configure the github repo", functionName: "githubRepoConfigure"},
                      {name: "Set GitHub authentication", functionName: "setGithubAuthToken"},
                      {name: "Configure the Cloudinary API", functionName: "cloudinaryConfigure"},
+                     {name: "Configure the Google Analytics tracking ID", functionName: "configureGoogleAnalytics"},
                     ]; 
   ss.addMenu("Configure", menuEntries);
 }
@@ -162,6 +204,7 @@ function generateProjectHTML(id) {
   html += '<!DOCTYPE html>' +
             '<html>' +
               '<head>' +
+                addGoogleScriptSnippets() +
                 '<base target="_top">' + 
                 getContent('head') +                   
                 '<title>' + projectData.title + ' - WDFD Development</title>' +
@@ -368,7 +411,7 @@ function uploadImagesFromArray(folder, fileIDArray){
 
     var fileID = fileIDArray[i];
     var fileName = 'image_' + i;
-    var path = generateImagePath(folder, fileName);
+    var path = generateImagePath(fileID, folder, fileName);
     createImage(fileID, path);
 
     json['url'] = path;
@@ -382,7 +425,7 @@ function uploadImagesFromArray(folder, fileIDArray){
 // ******************************************************************************************************
 // Take the folder and file name and generate the output URL
 // ******************************************************************************************************
-function generateImagePath(folder, fileName){
+function generateImagePath(fileID, folder, fileName){
   var fileType = DriveApp.getFileById(fileID).getMimeType();
   switch(fileType) {
     case 'image/bmp':
@@ -424,7 +467,7 @@ function createJSONFromArray(folder, fileIDArray){
     
     var fileID = fileIDArray[i];
     var fileName = 'image_' + i;
-    var path = generateImagePath(folder, fileName);
+    var path = generateImagePath(fileID, folder, fileName);
     json['url'] = path;
     
     jsonArray.push(json);

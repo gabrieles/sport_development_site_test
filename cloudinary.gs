@@ -1,5 +1,5 @@
 // ******************************************************************************************************
-// Function to store the github details of the user and repo, and store what is necessary for future calls
+// Function to store the Cloudinary details of the user for future calls
 // ******************************************************************************************************
 function cloudinaryConfigure() {
   
@@ -14,11 +14,10 @@ function cloudinaryConfigure() {
 
  }  
 
-function testUpload(){
-  var fileID = '132fuZpKLnVlxyQluEQllJVm5GBYaKMYz';
-  uploadImageToCloudinary(fileID,'team225')
-}
 
+// ******************************************************************************************************
+// Function to upload an image in gDrive to Cloudinary and apply a specific preset
+// ******************************************************************************************************
 function uploadImageToCloudinary(fileID, presetName){
  
   //https://cloudinary.com/documentation/upload_images#uploading_with_a_direct_call_to_the_api
@@ -36,3 +35,6 @@ function uploadImageToCloudinary(fileID, presetName){
   UrlFetchApp.fetch(base_url, options);
   
 }
+
+
+// see https://stackoverflow.com/questions/39592752/read-image-from-url-upload

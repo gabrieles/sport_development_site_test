@@ -11,13 +11,12 @@
          <div class="row">	
            <div class="col-sm-4">
              <div class="form-group">
-               <label for="sel1">Filter by project theme</label>
+               <label for="sel1">Filter by theme</label>
                <select class="form-control" id="sel1">
-                 <option>Gender equality</option>
-                 <option>Health</option>
-                 <option>Inclusion</option>
-                 <option>Peace building</option>
-                 <option>Youth development</option>
+                 <option>Equity and inclusion</option>
+                 <option>Social good</option>
+                 <option>Sport development</option>
+                 <option>Youth support</option>
                </select>
              </div>
            </div>
@@ -64,9 +63,38 @@
 </section>
 
 <script>
-function pageFunction() {
-  createProjectsTable('projects/projects.json','projects');
-}
+
+$( document ).ready(function() {
+  var jsonPath = 'projects/projects.json';
+  var html = '';
+
+  $.getJSON(jsonPath, function(data) {
+  
+    $.each(data, function(key, item){
+      if (item.is_published == '1') {
+        html += '<tr>';
+       
+        html += '<td class="item-title"><a href="/projects/' + item.id + '">' + item.title + '</a></td>';
+        html += '<td class="item-theme">' + item.theme + '</td>';
+        html += '<td class="item-country">' + item.country + '</td>';
+        html += '<td class="item-donate">';   
+                        
+        if (item.money_url || item.equipment_text || item.service_text) {
+          if (item.money_url) { html += '<i title="Money" class="fa fa-donate"></i>'; }
+          if (item.equipment_text) { html += '<i title="Equipment" class="fa fa-gift"></i>'; }
+          if (item.service_text) { html += '<i title="Skills" class="fa fa-user-circle"></i>'; }
+        }   
+        html += '</td>';  
+      
+        html += '</tr>';
+      }  
+    });
+  
+    $('#projects').html(html);
+  });
+  
+});
+
 
 $('select').on('change', function() {
   var value = this.value.toLowerCase();
