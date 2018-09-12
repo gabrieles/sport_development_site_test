@@ -1,21 +1,4 @@
 // ******************************************************************************************************
-// Function to store the Cloudinary details of the user for future calls
-// ******************************************************************************************************
-function cloudinaryConfigure() {
-  
-  var cloudinary_name = Browser.inputBox("Enter the Cloudinary name", "Cloudinary name", Browser.Buttons.OK);
-  PropertiesService.getScriptProperties().setProperty("cloudinary_name", cloudinary_name); 
-  
-  var cloudinary_key = Browser.inputBox("Enter the Cloudinary API key", "Cloudinary key", Browser.Buttons.OK);
-  PropertiesService.getScriptProperties().setProperty("cloudinary_key", cloudinary_key); 
-
-  var cloudinary_secret = Browser.inputBox("Enter the Cloudinary API secret", "Cloudinary secret", Browser.Buttons.OK);
-  PropertiesService.getScriptProperties().setProperty("cloudinary_secret", cloudinary_secret); 
-
- }  
-
-
-// ******************************************************************************************************
 // Function to upload an image in gDrive to Cloudinary and apply a specific preset
 // ******************************************************************************************************
 function uploadImageToCloudinary(fileID, presetName){

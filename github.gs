@@ -8,70 +8,6 @@ function createTestImage(){
 
 
 
-// ******************************************************************************************************
-// Function to store the github details for the conections to the GitHub repo
-// ******************************************************************************************************
-function githubRepoConfigure() {
-  
-  var gh_user = Browser.inputBox("Enter the GitHub username of the repo owner", "GitHub username", Browser.Buttons.OK);
-  PropertiesService.getScriptProperties().setProperty("gh_user", gh_user); 
-  
-  var gh_repo = Browser.inputBox("Enter your GitHub repo", "GitHub repo", Browser.Buttons.OK);
-  PropertiesService.getScriptProperties().setProperty("gh_repo", gh_repo);  
-  
- }  
-
-
-// ******************************************************************************************************
-// Function to store the github email and pass, and store the authentication token for future calls
-// NB: These details are stored as user properties, so they are not visible nor available to other users
-// Using OAuth we coudl have a higher rate of calls... but so far I have not seen a reason to bother
-// ******************************************************************************************************
-function setGithubAuthToken() {
-  
-  //get the user details
-  var git_user = Browser.inputBox("Enter your GitHub username", "GitHub username", Browser.Buttons.OK); 
-  PropertiesService.getUserProperties().setProperty("git_user", git_user); 
-  var git_password = Browser.inputBox("Enter your GitHub password (it will not be stored)", "GitHub password", Browser.Buttons.OK);
-  //base64 encode the username:pwd to create the Basic authentication that you need to access the OAUTH API
-  var authString = Utilities.base64Encode(git_user + ':' + git_password);
-  
-  
-  //Now make a call to GitHub and use Basic Auth to get an OAuth token 
-  var url = 'https://api.github.com/authorizations';  
-   
-  //note is required
-  var payloadParams = {
-    scopes: [
-      'repo',
-      'gist'
-    ],
-    note: 'gas-github_' + Date.now()  
-  }
-  
-  var params = {
-			method: 'POST',
-			muteHttpExceptions: true,
-			contentType: "application/json",
-            responseType: 'json',
-            headers: { Authorization: 'Basic ' + authString },
-			payload: JSON.stringify( payloadParams )
-		}
-  var response = UrlFetchApp.fetch(url, params);
-  
-  if (response.getResponseCode() == 200 || response.getResponseCode() == 201) {
-    Logger.log(response);
-    var response_JSON = JSON.parse(response);
- 	var git_token = response_JSON.token;
-    PropertiesService.getUserProperties().setProperty("git_token", git_token);
-  } else {
-    Logger.log("There was an error when trying to create the authorisation token.");
-	throw new Error(response.getContentText());
-  }
-
-}
-
-
 
 // ******************************************************************************************************
 // Function to send to logger the list of the repos of a user. 
@@ -346,4 +282,29 @@ function deleteFile(path, message, branch, sha) {
     return false;
   }
     
+}
+
+
+// ******************************************************************************************************
+// Take the output of generateFileIDArrayFromFileList, upload all images to gitHub, and return an array with their URL
+// ******************************************************************************************************
+function uploadImagesFromArray(folder, fileIDArray){
+  // create json
+  var jsonArray = [];  
+
+  for(var i=0; i<fileIDArray.length; i++) {
+    var json = new Object();
+    
+    json['type'] = 'image';
+
+    var fileID = fileIDArray[i];
+    var fileName = 'image_' + i;
+    var path = generateImagePath(fileID, folder, fileName);
+    createImage(fileID, path);
+
+    json['url'] = path;
+    
+    jsonArray.push(json);
+  }  
+  return jsonArray;
 }
