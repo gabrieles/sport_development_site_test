@@ -9,6 +9,17 @@ function createSampleDoc() {
 }
 
 
+function testStoreImageinGDrive(){
+  //see https://stackoverflow.com/questions/35236232/create-image-file-base64-to-blob-using-google-appscript
+  
+  //see https://stackoverflow.com/questions/23450187/storing-images-from-url-to-gae-datastore
+  var imageURL = "https://leadingpersonality.files.wordpress.com/2013/05/smile.jpg";
+  var image=UrlFetchApp.fetch(imageURL); 
+  var imageBlob = image.getBlob();
+  DriveApp.createFile("testImage.jpg",imageBlob);
+}
+
+
 // see https://developers.google.com/apps-script/reference/drive/drive-app#searchFolders(String)
 
 function getFoldersToLog(){

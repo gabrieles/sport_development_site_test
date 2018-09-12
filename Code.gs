@@ -39,7 +39,11 @@ function getContent(filename) {
 }
 
 
-function configureGoogleAnalytics() {
+
+// ******************************************************************************************************
+// Function to store the Google Analytics Tracking ID and the Google Optimize ID 
+// ******************************************************************************************************
+function configureGoogleScripts() {
   
   var ga_trackingID = Browser.inputBox("Enter your Google Analytics Tracking ID", "Tracking ID", Browser.Buttons.OK);
   PropertiesService.getScriptProperties().setProperty("ga_trackingID", ga_trackingID.trim()); 
@@ -56,6 +60,25 @@ function addGoogleScriptSnippets(){
   var ga_trackingID = printVal('ga_trackingID');
   var gOptimiseID = printVal('gOptimiseID');
   
+  // Add function to disable tracking if the opt-out cookie exists.
+  html += "<script> " +    
+            "var disableStr = 'ga-disable-" + ga_trackingID + "'; " +
+            "var gat_gtagStr = '_gat_gtag_" + ga_trackingID + "'; " +
+            "if (document.cookie.indexOf(disableStr + '=true') > -1) { window[disableStr] = true; } " +
+            "function delete_cookie(name) {" +
+              "var expires = new Date(0).toUTCString(); " +
+              "var domain = location.hostname.replace(/^www\./i, ''); " +
+              "document.cookie = name + '=; expires=' + expires + '; path=/; domain=.' + domain;" +
+            "}" + 
+            "function gaOptout() { " +
+              "delete_cookie('_ga'); " +
+              "delete_cookie(gat_gtagStr); " +
+              "delete_cookie('_gid'); " +
+              "document.cookie = disableStr + '=true; expires=Thu, 31 Dec 2099 23:59:59 UTC; path=/'; " +
+              "window[disableStr] = true; " + 
+            "} " +
+          "</script>";
+  
   html += "<style>.async-hide { opacity: 0 !important} </style>" +
           "<script>" + 
             "(function(a,s,y,n,c,h,i,d,e){s.className+=' '+y;h.start=1*new Date;" +
@@ -68,10 +91,10 @@ function addGoogleScriptSnippets(){
   html += '<!-- Global site tag (gtag.js) - Google Analytics -->' +
           '<script async src="https://www.googletagmanager.com/gtag/js?id=' + ga_trackingID + '"></script>' +
           '<script>' +
-            'window.dataLayer = window.dataLayer || [];' +
-            'function gtag(){dataLayer.push(arguments);}';
-  html +=   "gtag('js', new Date());" +
-            "gtag('config', '" + ga_trackingID + "', { 'optimize_id': '" + gOptimiseID + "'});" +
+            'window.dataLayer = window.dataLayer || []; ' +
+            'function gtag(){dataLayer.push(arguments);} ';
+  html +=   "gtag('js', new Date()); " +
+            "gtag('config', '" + ga_trackingID + "', { 'optimize_id': '" + gOptimiseID + "', 'anonymize_ip': true });" +
           "</script>";
   
   return html;            
@@ -174,9 +197,9 @@ function printVal(key) {
 function onOpen(){
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var menuEntries = [{name: "Configure the github repo", functionName: "githubRepoConfigure"},
-                     {name: "Set GitHub authentication", functionName: "setGithubAuthToken"},
                      {name: "Configure the Cloudinary API", functionName: "cloudinaryConfigure"},
-                     {name: "Configure the Google Analytics tracking ID", functionName: "configureGoogleAnalytics"},
+                     {name: "Configure Google Analytics and Optimize", functionName: "configureGoogleScripts"},
+                     {name: "Set your GitHub authentication", functionName: "setGithubAuthToken"},
                     ]; 
   ss.addMenu("Configure", menuEntries);
 }
