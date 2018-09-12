@@ -111,14 +111,14 @@ function createHTML(pageID, pageTitle, bodyClass) {
                '<head>' +
                  addGoogleScriptSnippets() +
                  '<base target="_top">' + 
-                  getContent('head') +                   
+                  getContent('template_head') +                   
                   '<title>' + pageTitle + '</title>' +
                   createLinksToJSandCSS() +  
                '</head>' +
                '<body id="page-top" class="' + bodyClass + '">' +
-                 getContent('navigation') +  
+                 getContent('template_navigation') +  
                  getContent(pageID) +
-                 getContent('footer') + 
+                 getContent('template_footer') + 
                '</body>' +
              '</html>'  
   return html;               
@@ -161,14 +161,14 @@ function createUtilityPageHTML(pageID, pageTitle, bodyClass) {
                '<head>' +
                  addGoogleScriptSnippets() +
                  '<base target="_top">' + 
-                  getContent('head') +                   
+                  getContent('template_head') +                   
                   '<title>' + pageTitle + '</title>' +
                   createLinksToJSandCSS() +  
                '</head>' +
                '<body id="page-top" class="utility-page' + bodyClass + '">' +
-                 getContent('navigation') +  
+                 getContent('template_navigation') +  
                  pageBody +
-                 getContent('footer') + 
+                 getContent('template_footer') + 
                '</body>' +
              '</html>'  
   return html;               
@@ -229,12 +229,12 @@ function generateProjectHTML(id) {
               '<head>' +
                 addGoogleScriptSnippets() +
                 '<base target="_top">' + 
-                getContent('head') +                   
+                getContent('template_head') +                   
                 '<title>' + projectData.title + ' - WDFD Development</title>' +
                 createLinksToJSandCSS() +  
               '</head>' +
               '<body id="page-top" class="' + bodyClass + '">' +
-                getContent('navigation');  
+                getContent('template_navigation');  
                
 	
   // Header
@@ -368,7 +368,7 @@ function generateProjectHTML(id) {
     
   }  
     
-  html += getContent('footer') + 
+  html += getContent('template_footer') + 
         '</body>' +
       '</html>';  
 
