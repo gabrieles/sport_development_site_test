@@ -1,11 +1,4 @@
-var policyFileID = "12kzgkjUvspUsMw4ZnliHawTbTYeKjVW8n4tFWiBbwMI"
-var termsFileID = "1J_-G_ASI_6Trh06TJNGH4l_NPwF1GaB3LcvOC8NsKKI"
-var devProjFileID = '1iKVUfRALKMkcb1jBcV7LFEy67gTU_BdGfV_FzHfoPXU';
-var discAmbassFileID = '1jlg3QmQiGZG1vhYp4hUoauT6odG2Qdy8EDLACD4VtFM';
-var teamFundFileID = '1gzmpsUdeXgyFpZwlolsDofR0t0buQahl0PlbiQ3euKk';
-
-
-function updateAllProjectPages(){
+function updateAllProjects(){
   var sheet = SpreadsheetApp.getActive().getSheetByName('Projects');
   
   //get all values
@@ -13,26 +6,41 @@ function updateAllProjectPages(){
   var range = sheet.getRange(2, 1, lastRow, 1);
   var projIDs = range.getValues();
   var pLength = projIDs.length;
-  for (var i=0; i<pLength-1; i++){
+  for (var i=0; i<pLength; i++){
     var index = projIDs[i];
-    updateProjectPage(index);
-    Logger.log('Project ' + index + ' updated');
+    if (index) {
+      updateProjectPage(index);
+    }
   }
 }
 
 
-function updateAllCorePages() {
-  updatePage('index.html', createHTML('home', 'WFDF Development - Home', 'homepage') );
- 
+function createTestImage(){
+  var fileID = '1154hFm_EBRxiCCNX9NSvhbbMLJE5u945';
+  var folder = 'images';
+  var fileName = 'test';
+  var path = generateImagePath(fileID, folder, fileName);
+  createImageInGitHub(fileID, path);
+}
+
+
+
+function updateCorePages() {
+  updatePage('index.html', createHTML('page_home', 'WFDF Development - Home', 'homepage') );
+  
+  updatePage('certificates/certificates.json', JSON.stringify(sheet2Json('Certificates')) );
+  updatePage('certificates.html', createHTML('page_certificates', 'Skill Certificates - WFDF Development', 'utility-page') );
+
   updatePage('projects/projects.json', JSON.stringify(sheet2Json('Projects')) );
-  updatePage('projects.html', createHTML('projects', 'WFDF Development - Projects', 'utility-page') );
+  updatePage('projects.html', createHTML('page_projects', 'WFDF Development - Projects', 'utility-page') );
   
   updatePage('resources/resources.json', JSON.stringify(sheet2Json('Resources')) );
-  updatePage('resources.html', createHTML('resources', 'WFDF Development - Resources', 'utility-page') );
+  updatePage('resources.html', createHTML('page_resources', 'WFDF Development - Resources', 'utility-page') );
   
-  updatePage('development-projects.html', createUtilityPageHTML(devProjFileID, 'Projects - WFDF Development') );
-  updatePage('privacy-policy.html', createUtilityPageHTML(policyFileID, 'Privacy Policy - WFDF Development') );
-  updatePage('terms-of-use.html', createUtilityPageHTML(termsFileID, 'Terms of use - WFDF Development'));
+  updatePage('wfdf-development-programs.html', createUtilityPageHTML(printVal(wfdfProgramsFileID), 'WFDF Development Programs - WFDF Development') );
+    
+  updatePage('privacy-policy.html', createUtilityPageHTML(printVal(privacyPolicyFileID), 'Privacy Policy - WFDF Development') );
+  updatePage('terms-of-use.html', createUtilityPageHTML(printVal(termsOfUseFileID), 'Terms of use - WFDF Development'));
    
 }
 
@@ -57,7 +65,6 @@ function updateMainJS() {
 }
 
 
-
 function createProjectPage(id) {
   var fileContent = generateProjectHTML(id);
   var path = "projects/" + id.toString() + '.html';
@@ -78,41 +85,39 @@ function createCarouselJSON(path){
   createFile(path, fileContent);
 }
 
-
-
-
 //function needed only once to initialise the whole project
 function generateAllCoreFiles() {
-    
+  
   //home
-  createFile('index.html', createHTML('home', 'WFDF Development - Home', 'homepage'));
+  createFile('index.html', createHTML('page_home', 'WFDF Development - Home', 'homepage'));
   
   //projects json
   createFile('projects/projects.json', JSON.stringify(sheet2Json('Projects')));
   
-  //projects page
-  createFile('projects.html', createHTML('projects', 'WFDF Development - Projects', 'utility-page'));
+  //Projects page
+  createFile('projects.html', createHTML('page_projects', 'WFDF Development - Projects', 'utility-page'));
 
   //resources json
   createFile('resources/resources.json', JSON.stringify(sheet2Json('Resources')));
   
   //Resources page
-  createFile('resources.html', createHTML('resources', 'WFDF Development - Projects', 'utility-page'));
+  createFile('resources.html', createHTML('page_resources', 'WFDF Development - Projects', 'utility-page'));
+    
+  //Privacy policy
+  createFile('privacy-policy.html', createUtilityPageHTML(printVal(privacyPolicyFileID), 'Privacy Policy - WFDF Development'));
   
-  //development projects
-  createFile('development-projects.html', createUtilityPageHTML(devProjFileID, 'Development Projects - WFDF Development') );
+  //resources json
+  createFile('certificates/certificates.json', JSON.stringify(sheet2Json('Certificates')));
+  
+  //Certificates
+  createFile('certificates.html', createHTML('page_certificates', 'Skill Certificates - WFDF Development', 'utility-page'));
+  
+  //Terms
+  createFile('terms-of-use.html', createUtilityPageHTML(printVal(termsOfUseFileID), 'Terms of use - WFDF Development'));
+  
+  //wfdf programs
+  createFile('wfdf-development-programs.html', createUtilityPageHTML(printVal(wfdfProgramsFileID), 'WFDF Development Programs - WFDF Development') );
 
-  //disc ambassadors
-  createFile('disc-ambassadors.html', createUtilityPageHTML(discAmbassFileID, 'Disc Ambassadors - WFDF Development'));
-  
-  //privacy policy
-  createFile('privacy-policy.html', createUtilityPageHTML(policyFileID, 'Privacy Policy - WFDF Development'));
-
-  //team Fundraising
-  createFile('team-fundraising.html', createUtilityPageHTML(teamFundFileID, 'Team fundraising - WFDF Development'));
-  
-  //terms
-  createFile('terms-of-use.html', createUtilityPageHTML(termsFileID, 'Terms of use - WFDF Development'));
 }
 
 

@@ -57,7 +57,9 @@ function printVal(key) {
 
 
 // ******************************************************************************************************
-// Get the content of a google sheet and convert it into a json - based on https://gist.github.com/daichan4649/8877801 but with performance improvements
+// Get the content of a google sheet and convert it into a json
+// if there is a column called 'is_published', only rows with value 1 in that column will be printed in the JSON
+// if a column name has the string "_hidden"
 // ******************************************************************************************************
 function sheet2Json(sheetName) {
   var sheet = SpreadsheetApp.getActive().getSheetByName(sheetName);
@@ -70,16 +72,24 @@ function sheet2Json(sheetName) {
   
   //first row is for the property titles
   var titleColumns = allValues[0];
-
+  var isFiltered = titleColumns.indexOf('is_published');
   // create json
   var jsonArray = [];
   for(var i=1; i<lastRow; i++) {
     var line = allValues[i];
     var json = new Object();
     for(var j=0; j<lastCol; j++) {
-      json[titleColumns[j]] = line[j];
+      if (titleColumns[j].indexOf("_hidden") == -1){
+        json[titleColumns[j]] = line[j];
+      }
     }
-    jsonArray.push(json);
+    if (isFiltered != -1){
+      if (json['is_published'] == 1) {
+        jsonArray.push(json);
+      }
+    } else {
+      jsonArray.push(json);
+    }
   }
   return jsonArray;
 }

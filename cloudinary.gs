@@ -19,5 +19,3 @@ function uploadImageToCloudinary(fileID, presetName){
   
 }
 
-
-// see https://stackoverflow.com/questions/39592752/read-image-from-url-upload
